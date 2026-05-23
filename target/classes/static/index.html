@@ -1351,10 +1351,10 @@
                 body: JSON.stringify(datos)
             });
 
-            if (!respuesta.ok) {
-                const mensaje = await leerErrorRespuesta(respuesta);
-                throw new Error(mensaje || "No se pudo guardar el club");
-            }
+			if (!respuesta.ok) {
+			    const texto = await respuesta.text();
+			    throw new Error(texto || "No se pudo guardar el club");
+			}
 
             cerrarModal();
             await cargarDashboard();
@@ -1370,9 +1370,9 @@
         try {
             const json = JSON.parse(texto);
             return json.message || json.error || texto;
-        } catch (error) {
-            return texto;
-        }
+			catch (error) {
+			    mostrarToast(error.message);
+			}
     }
 
     async function guardarEntrenador(evento) {
