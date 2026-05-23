@@ -1135,16 +1135,19 @@
         tabla.innerHTML = `<tr><td colspan="4">Cargando...</td></tr>`;
 
         try {
-            const [respuestaClubes, respuestaEntrenadores] = await Promise.all([
-                fetch(API_CLUBES),
-                fetch(API_ENTRENADORES)
-            ]);
-
+            const respuestaClubes = await fetch(API_CLUBES);
             if (!respuestaClubes.ok) throw new Error("No se pudo conectar con /api/clubes");
-            if (!respuestaEntrenadores.ok) throw new Error("No se pudo conectar con /api/entrenadores");
 
             clubesGlobal = await respuestaClubes.json();
-            entrenadoresGlobal = await respuestaEntrenadores.json();
+
+            const respuestaEntrenadores = await fetch(API_ENTRENADORES);
+            if (respuestaEntrenadores.ok) {
+                entrenadoresGlobal = await respuestaEntrenadores.json();
+            } else {
+                entrenadoresGlobal = clubesGlobal
+                    .map(club => club.entrenador)
+                    .filter(entrenador => entrenador && entrenador.id);
+            }
 
             renderizarEstadisticas(clubesGlobal);
             renderizarClubes(clubesGlobal);
@@ -1351,10 +1354,10 @@
                 body: JSON.stringify(datos)
             });
 
-			if (!respuesta.ok) {
-			    const texto = await respuesta.text();
-			    throw new Error(texto || "No se pudo guardar el club");
-			}
+            if (!respuesta.ok) {
+                const mensaje = await leerErrorRespuesta(respuesta);
+                throw new Error(mensaje || "No se pudo guardar el club");
+            }
 
             cerrarModal();
             await cargarDashboard();
@@ -1370,9 +1373,9 @@
         try {
             const json = JSON.parse(texto);
             return json.message || json.error || texto;
-			catch (error) {
-			    mostrarToast(error.message);
-			}
+        } catch (error) {
+            return texto;
+        }
     }
 
     async function guardarEntrenador(evento) {
@@ -1416,19 +1419,34 @@
         }
     }
 
-    document.querySelectorAll(".role-btn").forEach(boton => {
-        boton.addEventListener("click", () => {
-            document.querySelectorAll(".role-btn").forEach(item => item.classList.remove("active"));
-            boton.classList.add("active");
-            cambiarRol(boton.dataset.role);
+    function inicializarDashboard() {
+        window.abrirModalCrear = abrirModalCrear;
+        window.abrirModalEntrenador = abrirModalEntrenador;
+        window.cerrarModal = cerrarModal;
+        window.cerrarModalEntrenador = cerrarModalEntrenador;
+        window.cargarDashboard = cargarDashboard;
+        window.agregarJugadorFormulario = agregarJugadorFormulario;
+        window.agregarCompeticionFormulario = agregarCompeticionFormulario;
+        window.ejecutarAccionRol = ejecutarAccionRol;
+        window.abrirModalEditar = abrirModalEditar;
+        window.eliminarClub = eliminarClub;
+
+        document.querySelectorAll(".role-btn").forEach(boton => {
+            boton.addEventListener("click", () => {
+                document.querySelectorAll(".role-btn").forEach(item => item.classList.remove("active"));
+                boton.classList.add("active");
+                cambiarRol(boton.dataset.role);
+            });
         });
-    });
 
-    document.getElementById("formClub").addEventListener("submit", guardarClub);
-    document.getElementById("formEntrenador").addEventListener("submit", guardarEntrenador);
+        document.getElementById("formClub").addEventListener("submit", guardarClub);
+        document.getElementById("formEntrenador").addEventListener("submit", guardarEntrenador);
 
-    cambiarRol("admin");
-    cargarDashboard();
+        cambiarRol("admin");
+        cargarDashboard();
+    }
+
+    document.addEventListener("DOMContentLoaded", inicializarDashboard);
 </script>
 
 </body>
