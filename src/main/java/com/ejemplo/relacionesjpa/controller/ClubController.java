@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,14 +15,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import com.ejemplo.relacionesjpa.entity.Entrenador;
-import com.ejemplo.relacionesjpa.repository.EntrenadorRepository;
+
 import com.ejemplo.relacionesjpa.entity.Asociacion;
 import com.ejemplo.relacionesjpa.entity.Club;
 import com.ejemplo.relacionesjpa.entity.Competicion;
+import com.ejemplo.relacionesjpa.entity.Entrenador;
 import com.ejemplo.relacionesjpa.repository.AsociacionRepository;
 import com.ejemplo.relacionesjpa.repository.ClubRepository;
 import com.ejemplo.relacionesjpa.repository.CompeticionRepository;
+import com.ejemplo.relacionesjpa.repository.EntrenadorRepository;
 
 @RestController
 @RequestMapping("/api/clubes")
@@ -42,6 +44,7 @@ public class ClubController {
         this.competicionRepository = competicionRepository;
         this.entrenadorRepository = entrenadorRepository;
     }
+
     @GetMapping
     public List<Club> listarClubes() {
         return clubRepository.findAll();
@@ -50,18 +53,16 @@ public class ClubController {
     @GetMapping("/{id}")
     public Club buscarPorId(@PathVariable Long id) {
         return clubRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Club no encontrado con id: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Club no encontrado"));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Club crearClub(@RequestBody Club club) {
+        Entrenador entrenador = obtenerEntrenadorDisponible(club, null);
+        club.setEntrenador(entrenador);
+
         prepararRelaciones(club);
-        if (club.getEntrenador() != null && club.getEntrenador().getId() != null) {
-            Entrenador entrenadorGuardado = entrenadorRepository.findById(club.getEntrenador().getId())
-                    .orElseThrow(() -> new RuntimeException("Entrenador no encontrado"));
-            club.setEntrenador(entrenadorGuardado);
-        }
         return clubRepository.save(club);
     }
 
@@ -69,11 +70,13 @@ public class ClubController {
     @Transactional
     public Club actualizarClub(@PathVariable Long id, @RequestBody Club datosClub) {
         Club clubExistente = clubRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Club no encontrado con id: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Club no encontrado"));
+
+        Entrenador entrenador = obtenerEntrenadorDisponible(datosClub, id);
 
         clubExistente.setNombre(datosClub.getNombre());
         clubExistente.setCiudad(datosClub.getCiudad());
-        clubExistente.setEntrenador(datosClub.getEntrenador());
+        clubExistente.setEntrenador(entrenador);
 
         if (datosClub.getAsociacion() != null) {
             Asociacion asociacionGuardada = asociacionRepository.save(datosClub.getAsociacion());
@@ -101,11 +104,36 @@ public class ClubController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminarClub(@PathVariable Long id) {
         Club club = clubRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Club no encontrado con id: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Club no encontrado"));
 
         club.getCompeticiones().clear();
         clubRepository.save(club);
         clubRepository.delete(club);
+    }
+
+    private Entrenador obtenerEntrenadorDisponible(Club club, Long clubIdActual) {
+        if (club.getEntrenador() == null || club.getEntrenador().getId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debes seleccionar un entrenador existente.");
+        }
+
+        Long entrenadorId = club.getEntrenador().getId();
+
+        Entrenador entrenador = entrenadorRepository.findById(entrenadorId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Entrenador no encontrado."));
+
+        boolean entrenadorOcupado;
+
+        if (clubIdActual == null) {
+            entrenadorOcupado = clubRepository.existsByEntrenador_Id(entrenadorId);
+        } else {
+            entrenadorOcupado = clubRepository.existsByEntrenador_IdAndIdNot(entrenadorId, clubIdActual);
+        }
+
+        if (entrenadorOcupado) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Este entrenador ya está asignado a otro club.");
+        }
+
+        return entrenador;
     }
 
     private void prepararRelaciones(Club club) {

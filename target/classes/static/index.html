@@ -1352,7 +1352,7 @@
             });
 
             if (!respuesta.ok) {
-                const mensaje = await respuesta.text();
+                const mensaje = await leerErrorRespuesta(respuesta);
                 throw new Error(mensaje || "No se pudo guardar el club");
             }
 
@@ -1360,7 +1360,18 @@
             await cargarDashboard();
             mostrarToast(editando ? "Club actualizado correctamente" : "Club creado correctamente");
         } catch (error) {
-            mostrarToast("Error: revisa que el entrenador no esté asignado a otro club");
+            mostrarToast(error.message);
+        }
+    }
+
+    async function leerErrorRespuesta(respuesta) {
+        const texto = await respuesta.text();
+
+        try {
+            const json = JSON.parse(texto);
+            return json.message || json.error || texto;
+        } catch (error) {
+            return texto;
         }
     }
 
