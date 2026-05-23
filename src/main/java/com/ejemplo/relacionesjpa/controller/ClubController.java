@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,7 +14,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.ejemplo.relacionesjpa.dto.ClubRequest;
 import com.ejemplo.relacionesjpa.entity.Asociacion;
 import com.ejemplo.relacionesjpa.entity.Club;
 import com.ejemplo.relacionesjpa.entity.Competicion;
@@ -57,44 +58,26 @@ public class ClubController {
     }
 
     @PostMapping
+    @Transactional
     @ResponseStatus(HttpStatus.CREATED)
-    public Club crearClub(@RequestBody Club club) {
-        Entrenador entrenador = obtenerEntrenadorDisponible(club, null);
-        club.setEntrenador(entrenador);
+    public Club crearClub(@RequestBody ClubRequest request) {
+        Entrenador entrenador = obtenerEntrenadorDisponible(request.getEntrenadorId(), null);
 
-        prepararRelaciones(club);
+        Club club = new Club();
+        copiarDatosAlClub(club, request, entrenador);
+
         return clubRepository.save(club);
     }
 
     @PutMapping("/{id}")
     @Transactional
-    public Club actualizarClub(@PathVariable Long id, @RequestBody Club datosClub) {
+    public Club actualizarClub(@PathVariable Long id, @RequestBody ClubRequest request) {
         Club clubExistente = clubRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Club no encontrado"));
 
-        Entrenador entrenador = obtenerEntrenadorDisponible(datosClub, id);
+        Entrenador entrenador = obtenerEntrenadorDisponible(request.getEntrenadorId(), id);
 
-        clubExistente.setNombre(datosClub.getNombre());
-        clubExistente.setCiudad(datosClub.getCiudad());
-        clubExistente.setEntrenador(entrenador);
-
-        if (datosClub.getAsociacion() != null) {
-            Asociacion asociacionGuardada = asociacionRepository.save(datosClub.getAsociacion());
-            clubExistente.setAsociacion(asociacionGuardada);
-        }
-
-        clubExistente.getJugadores().clear();
-
-        if (datosClub.getJugadores() != null) {
-            clubExistente.getJugadores().addAll(datosClub.getJugadores());
-        }
-
-        clubExistente.getCompeticiones().clear();
-
-        if (datosClub.getCompeticiones() != null) {
-            List<Competicion> competicionesGuardadas = guardarCompeticiones(datosClub.getCompeticiones());
-            clubExistente.getCompeticiones().addAll(competicionesGuardadas);
-        }
+        copiarDatosAlClub(clubExistente, request, entrenador);
 
         return clubRepository.save(clubExistente);
     }
@@ -111,40 +94,51 @@ public class ClubController {
         clubRepository.delete(club);
     }
 
-    private Entrenador obtenerEntrenadorDisponible(Club club, Long clubIdActual) {
-        if (club.getEntrenador() == null || club.getEntrenador().getId() == null) {
+    private Entrenador obtenerEntrenadorDisponible(Long entrenadorId, Long clubIdActual) {
+        if (entrenadorId == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debes seleccionar un entrenador existente.");
         }
-
-        Long entrenadorId = club.getEntrenador().getId();
 
         Entrenador entrenador = entrenadorRepository.findById(entrenadorId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Entrenador no encontrado."));
 
-        boolean entrenadorOcupado;
-
         if (clubIdActual == null) {
-            entrenadorOcupado = clubRepository.existsByEntrenador_Id(entrenadorId);
+            if (clubRepository.existsByEntrenador_Id(entrenadorId)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Este entrenador ya está asignado a otro club.");
+            }
         } else {
-            entrenadorOcupado = clubRepository.existsByEntrenador_IdAndIdNot(entrenadorId, clubIdActual);
-        }
+            boolean entrenadorAsignadoAOtroClub =
+                    clubRepository.existsByEntrenador_IdAndIdNot(entrenadorId, clubIdActual);
 
-        if (entrenadorOcupado) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Este entrenador ya está asignado a otro club.");
+            if (entrenadorAsignadoAOtroClub) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Este entrenador ya está asignado a otro club.");
+            }
         }
 
         return entrenador;
     }
 
-    private void prepararRelaciones(Club club) {
-        if (club.getAsociacion() != null) {
-            Asociacion asociacionGuardada = asociacionRepository.save(club.getAsociacion());
+    private void copiarDatosAlClub(Club club, ClubRequest request, Entrenador entrenador) {
+        club.setNombre(request.getNombre());
+        club.setCiudad(request.getCiudad());
+        club.setEntrenador(entrenador);
+
+        if (request.getAsociacion() != null) {
+            Asociacion asociacionGuardada = asociacionRepository.save(request.getAsociacion());
             club.setAsociacion(asociacionGuardada);
         }
 
-        if (club.getCompeticiones() != null) {
-            List<Competicion> competicionesGuardadas = guardarCompeticiones(club.getCompeticiones());
-            club.setCompeticiones(competicionesGuardadas);
+        club.getJugadores().clear();
+
+        if (request.getJugadores() != null) {
+            club.getJugadores().addAll(request.getJugadores());
+        }
+
+        club.getCompeticiones().clear();
+
+        if (request.getCompeticiones() != null) {
+            List<Competicion> competicionesGuardadas = guardarCompeticiones(request.getCompeticiones());
+            club.getCompeticiones().addAll(competicionesGuardadas);
         }
     }
 
@@ -152,8 +146,14 @@ public class ClubController {
         List<Competicion> competicionesGuardadas = new ArrayList<>();
 
         for (Competicion competicion : competiciones) {
-            Competicion competicionGuardada = competicionRepository.save(competicion);
-            competicionesGuardadas.add(competicionGuardada);
+            if (competicion.getId() != null && competicionRepository.existsById(competicion.getId())) {
+                Competicion existente = competicionRepository.findById(competicion.getId())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Competición no encontrada"));
+                competicionesGuardadas.add(existente);
+            } else {
+                Competicion nueva = competicionRepository.save(competicion);
+                competicionesGuardadas.add(nueva);
+            }
         }
 
         return competicionesGuardadas;

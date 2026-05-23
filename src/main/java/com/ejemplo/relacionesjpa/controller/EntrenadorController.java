@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ejemplo.relacionesjpa.entity.Entrenador;
-import com.ejemplo.relacionesjpa.repository.ClubRepository;
 import com.ejemplo.relacionesjpa.repository.EntrenadorRepository;
 
 @RestController
@@ -22,13 +21,9 @@ import com.ejemplo.relacionesjpa.repository.EntrenadorRepository;
 public class EntrenadorController {
 
     private final EntrenadorRepository entrenadorRepository;
-    private final ClubRepository clubRepository;
 
-    public EntrenadorController(
-            EntrenadorRepository entrenadorRepository,
-            ClubRepository clubRepository) {
+    public EntrenadorController(EntrenadorRepository entrenadorRepository) {
         this.entrenadorRepository = entrenadorRepository;
-        this.clubRepository = clubRepository;
     }
 
     @GetMapping
@@ -50,24 +45,20 @@ public class EntrenadorController {
 
     @PutMapping("/{id}")
     public Entrenador actualizarEntrenador(@PathVariable Long id, @RequestBody Entrenador datosEntrenador) {
-        Entrenador entrenadorExistente = entrenadorRepository.findById(id)
+        Entrenador entrenador = entrenadorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Entrenador no encontrado con id: " + id));
 
-        entrenadorExistente.setNombre(datosEntrenador.getNombre());
-        entrenadorExistente.setApellido(datosEntrenador.getApellido());
-        entrenadorExistente.setEdad(datosEntrenador.getEdad());
-        entrenadorExistente.setNacionalidad(datosEntrenador.getNacionalidad());
+        entrenador.setNombre(datosEntrenador.getNombre());
+        entrenador.setApellido(datosEntrenador.getApellido());
+        entrenador.setEdad(datosEntrenador.getEdad());
+        entrenador.setNacionalidad(datosEntrenador.getNacionalidad());
 
-        return entrenadorRepository.save(entrenadorExistente);
+        return entrenadorRepository.save(entrenador);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminarEntrenador(@PathVariable Long id) {
-        if (clubRepository.existsByEntrenador_Id(id)) {
-            throw new RuntimeException("No se puede eliminar el entrenador porque está asignado a un club.");
-        }
-
         entrenadorRepository.deleteById(id);
     }
 }
