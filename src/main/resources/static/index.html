@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard CRUD Clubes | Relaciones JPA</title>
+
+    <style>
+        :root {
+            --bg: #eef2f7;
+            --sidebar: #111827;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #16a34a;
+            --warning: #f59e0b;
+            --danger: #dc2626;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --soft: #f8fafc;
+            --radius: 20px;
+            --shadow: 0 16px 35px rgba(15, 23, 42, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .layout {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+        }
+
+        .sidebar {
+            background: linear-gradient(180deg, #0f172a, #111827);
+            color: white;
+            padding: 28px 22px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 34px;
+        }
+
+        .brand-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #2563eb, #22c55e);
+            display: grid;
+            place-items: center;
+            font-size: 24px;
+            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.35);
+        }
+
+        .brand h1 {
+            font-size: 20px;
+            line-height: 1.1;
+        }
+
+        .brand small {
+            color: #cbd5e1;
+            font-size: 12px;
+        }
+
+        .role-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #94a3b8;
+            margin-bottom: 12px;
+        }
+
+        .role-btn {
+            width: 100%;
+            border: 0;
+            background: transparent;
+            color: #d1d5db;
+            padding: 13px 14px;
+            margin-bottom: 9px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            font-size: 15px;
+            text-align: left;
+            transition: 0.25s;
+        }
+
+        .role-btn:hover,
+        .role-btn.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(3px);
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            left: 22px;
+            right: 22px;
+            bottom: 24px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            padding: 16px;
+        }
+
+        .sidebar-footer p {
+            font-size: 13px;
+            color: #cbd5e1;
+            line-height: 1.4;
+        }
+
+        .main {
+            padding: 30px;
+            overflow: hidden;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .topbar h2 {
+            font-size: 30px;
+            margin-bottom: 4px;
+        }
+
+        .topbar p {
+            color: var(--muted);
+        }
+
+        .status {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--shadow);
+            white-space: nowrap;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #2563eb, #1e40af 55%, #0f172a);
+            border-radius: var(--radius);
+            padding: 28px;
+            color: white;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+            display: grid;
+            grid-template-columns: 1.4fr 0.8fr;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .hero h3 {
+            font-size: 26px;
+            margin-bottom: 10px;
+        }
+
+        .hero p {
+            color: #dbeafe;
+            line-height: 1.5;
+            margin-bottom: 18px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .hero-card {
+            background: rgba(255, 255, 255, 0.13);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 18px;
+            padding: 18px;
+        }
+
+        .hero-card strong {
+            display: block;
+            font-size: 34px;
+            margin-bottom: 4px;
+        }
+
+        .btn {
+            border: 0;
+            border-radius: 14px;
+            padding: 11px 15px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary { background: white; color: var(--primary-dark); }
+        .btn-blue { background: var(--primary); color: white; }
+        .btn-gray { background: #f3f4f6; color: #111827; }
+        .btn-danger { background: #fee2e2; color: #991b1b; }
+        .btn-warning { background: #fef3c7; color: #92400e; }
+        .btn-success { background: #dcfce7; color: #166534; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(160px, 1fr));
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card span {
+            display: inline-flex;
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            align-items: center;
+            justify-content: center;
+            background: #eff6ff;
+            margin-bottom: 14px;
+            font-size: 22px;
+        }
+
+        .stat-card h4 {
+            font-size: 28px;
+            margin-bottom: 4px;
+        }
+
+        .stat-card p {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1.35fr 0.65fr;
+            gap: 22px;
+        }
+
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px;
+            box-shadow: var(--shadow);
+            margin-bottom: 22px;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .panel-header h3 {
+            font-size: 20px;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 11px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #eff6ff;
+            color: var(--primary-dark);
+        }
+
+        .club-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .club-card {
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 18px;
+            background: #fbfdff;
+        }
+
+        .club-card-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .club-card h4 {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .club-card p {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        .mini-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .mini-box {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 13px;
+        }
+
+        .mini-box strong {
+            display: block;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .mini-box span {
+            font-weight: 700;
+        }
+
+        .role-info { border-left: 5px solid var(--primary); }
+        .role-info h3 { margin-bottom: 10px; }
+        .role-info p { color: var(--muted); line-height: 1.55; margin-bottom: 15px; }
+
+        .permissions {
+            display: grid;
+            gap: 10px;
+        }
+
+        .permission {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 14px;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .actions {
+            display: grid;
+            gap: 11px;
+        }
+
+        .action-btn {
+            border: 0;
+            border-radius: 14px;
+            padding: 13px 14px;
+            background: #f3f4f6;
+            color: #111827;
+            cursor: pointer;
+            font-weight: 700;
+            text-align: left;
+            transition: 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #e5e7eb;
+            transform: translateY(-1px);
+        }
+
+        .table-wrap { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 680px;
+        }
+
+        th, td {
+            padding: 13px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        th {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+        }
+
+        td strong { color: var(--text); }
+
+        .pill {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #ecfdf5;
+            color: #047857;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .loading, .error {
+            background: var(--card);
+            padding: 24px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .error {
+            color: #991b1b;
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.62);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 22px;
+            z-index: 50;
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            width: min(1050px, 100%);
+            max-height: 90vh;
+            overflow: auto;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+        }
+
+        .modal.small { width: min(650px, 100%); }
+
+        .modal-header {
+            padding: 22px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 2;
+        }
+
+        .modal-header h3 { font-size: 24px; }
+        .modal-body { padding: 22px; }
+
+        .form-section {
+            background: var(--soft);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 18px;
+            margin-bottom: 18px;
+        }
+
+        .form-section h4 {
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .form-group {
+            display: grid;
+            gap: 7px;
+        }
+
+        .form-group.full { grid-column: 1 / -1; }
+
+        label {
+            font-size: 13px;
+            font-weight: 800;
+            color: #374151;
+        }
+
+        input, select {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 13px;
+            padding: 12px 13px;
+            font-size: 14px;
+            outline: none;
+            background: white;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+        }
+
+        .hint {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .item-list {
+            display: grid;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .dynamic-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr 110px 1fr auto;
+            gap: 10px;
+            align-items: center;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px;
+        }
+
+        .dynamic-item.competition {
+            grid-template-columns: 1.2fr 140px 150px 150px auto;
+        }
+
+        .empty-list {
+            border: 1px dashed #cbd5e1;
+            background: white;
+            color: var(--muted);
+            border-radius: 14px;
+            padding: 14px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .modal-footer {
+            padding: 18px 22px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            position: sticky;
+            bottom: 0;
+            background: white;
+        }
+
+        .toast {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            background: #111827;
+            color: white;
+            padding: 14px 18px;
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transform: translateY(15px);
+            pointer-events: none;
+            transition: 0.25s;
+            z-index: 80;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 1050px) {
+            .layout { grid-template-columns: 1fr; }
+            .sidebar { position: relative; height: auto; }
+            .sidebar-footer { position: static; margin-top: 20px; }
+            .stats, .grid, .hero { grid-template-columns: 1fr; }
+            .dynamic-item, .dynamic-item.competition { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 680px) {
+            .main { padding: 18px; }
+            .topbar { align-items: flex-start; flex-direction: column; }
+            .stats, .mini-grid, .form-grid, .dynamic-item, .dynamic-item.competition { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="layout">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">⚽</div>
+            <div>
+                <h1>ClubManager</h1>
+                <small>Dashboard CRUD + JPA</small>
+            </div>
+        </div>
+
+        <p class="role-title">Seleccionar rol</p>
+
+        <button class="role-btn active" data-role="admin"><span>🛡️</span> Administrador</button>
+        <button class="role-btn" data-role="entrenador"><span>📋</span> Entrenador</button>
+        <button class="role-btn" data-role="asociacion"><span>🏛️</span> Asociación</button>
+        <button class="role-btn" data-role="jugador"><span>👟</span> Jugador</button>
+
+        <div class="sidebar-footer">
+            <p><strong>Nuevo ajuste:</strong></p>
+            <p>El administrador crea entrenadores y luego los selecciona al crear o editar un club.</p>
+        </div>
+    </aside>
+
+    <main class="main">
+        <section class="topbar">
+            <div>
+                <h2 id="tituloRol">Panel del Administrador</h2>
+                <p id="subtituloRol">Gestión general del sistema deportivo.</p>
+            </div>
+            <div class="status">
+                <span class="dot"></span>
+                <span id="apiEstado">API conectada</span>
+            </div>
+        </section>
+
+        <section class="hero">
+            <div>
+                <h3>Gestión de clubes deportivos</h3>
+                <p>Este dashboard consume <strong>/api/clubes</strong> y <strong>/api/entrenadores</strong>. Los entrenadores se crean aparte y se seleccionan desde una lista.</p>
+                <div class="hero-actions">
+                    <button class="btn btn-primary" onclick="abrirModalCrear()">➕ Nuevo club</button>
+                    <button class="btn btn-primary" onclick="abrirModalEntrenador()">🎯 Nuevo entrenador</button>
+                    <button class="btn btn-gray" onclick="cargarDashboard()">🔄 Recargar datos</button>
+                </div>
+            </div>
+            <div class="hero-card">
+                <strong id="clubPrincipal">0</strong>
+                <span>clubes cargados desde Spring Boot</span>
+            </div>
+        </section>
+
+        <section class="stats">
+            <article class="stat-card"><span>🏟️</span><h4 id="totalClubes">0</h4><p>Clubes registrados</p></article>
+            <article class="stat-card"><span>👥</span><h4 id="totalJugadores">0</h4><p>Jugadores registrados</p></article>
+            <article class="stat-card"><span>🏆</span><h4 id="totalCompeticiones">0</h4><p>Competiciones activas</p></article>
+            <article class="stat-card"><span>🎯</span><h4 id="totalEntrenadores">0</h4><p>Entrenadores creados</p></article>
+        </section>
+
+        <section class="grid">
+            <div>
+                <section class="panel">
+                    <div class="panel-header">
+                        <h3>Clubes registrados</h3>
+                        <span class="tag">CRUD clubes</span>
+                    </div>
+                    <div id="clubesContainer" class="club-list">
+                        <div class="loading">Cargando información...</div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <h3>Plantilla de jugadores</h3>
+                        <span class="tag">@OneToMany</span>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Jugador</th>
+                                    <th>Número</th>
+                                    <th>Posición</th>
+                                    <th>Club</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaJugadores">
+                                <tr><td colspan="4">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <aside>
+                <section class="panel role-info">
+                    <h3 id="rolNombre">Administrador</h3>
+                    <p id="rolDescripcion">Controla la información general del sistema.</p>
+                    <div class="permissions" id="permisosRol"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <h3>Acciones rápidas</h3>
+                    </div>
+                    <div class="actions" id="accionesRol"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <h3>Entrenadores disponibles</h3>
+                        <span class="tag">@OneToOne</span>
+                    </div>
+                    <div id="entrenadoresContainer" class="club-list">
+                        <div class="loading">Cargando entrenadores...</div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <h3>Competiciones</h3>
+                        <span class="tag">@ManyToMany</span>
+                    </div>
+                    <div id="competicionesContainer" class="club-list">
+                        <div class="loading">Cargando competiciones...</div>
+                    </div>
+                </section>
+            </aside>
+        </section>
+    </main>
+</div>
+
+<div class="modal-overlay" id="modalClub">
+    <section class="modal">
+        <div class="modal-header">
+            <div>
+                <h3 id="modalTitulo">Nuevo club</h3>
+                <p class="hint">Primero crea entrenadores. Luego selecciónalos en la lista del club.</p>
+            </div>
+            <button class="btn btn-gray" onclick="cerrarModal()">✖</button>
+        </div>
+
+        <form id="formClub">
+            <div class="modal-body">
+                <input type="hidden" id="clubId">
+
+                <section class="form-section">
+                    <h4>🏟️ Datos del club</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nombre del club</label>
+                            <input id="clubNombre" required placeholder="Ej: Tigres de Curumaní">
+                        </div>
+                        <div class="form-group">
+                            <label>Ciudad</label>
+                            <input id="clubCiudad" required placeholder="Ej: Curumaní">
+                        </div>
+                    </div>
+                </section>
+
+                <section class="form-section">
+                    <div class="panel-header">
+                        <h4>🎯 Entrenador del club</h4>
+                        <button type="button" class="btn btn-success" onclick="abrirModalEntrenador()">➕ Crear entrenador</button>
+                    </div>
+                    <div class="form-group full">
+                        <label>Selecciona un entrenador existente</label>
+                        <select id="entrenadorSelect" required></select>
+                        <p class="hint">El entrenador ya debe existir. Cada club puede tener un solo entrenador.</p>
+                    </div>
+                </section>
+
+                <section class="form-section">
+                    <h4>🏛️ Asociación</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nombre</label>
+                            <input id="asociacionNombre" required placeholder="Ej: Federación Colombiana de Fútbol">
+                        </div>
+                        <div class="form-group">
+                            <label>País</label>
+                            <input id="asociacionPais" required placeholder="Ej: Colombia">
+                        </div>
+                        <div class="form-group full">
+                            <label>Presidente</label>
+                            <input id="asociacionPresidente" required placeholder="Ej: Presidente FCF">
+                        </div>
+                    </div>
+                </section>
+
+                <section class="form-section">
+                    <div class="panel-header">
+                        <h4>👥 Jugadores</h4>
+                        <button type="button" class="btn btn-success" onclick="agregarJugadorFormulario()">➕ Agregar jugador</button>
+                    </div>
+                    <div id="jugadoresLista" class="item-list"></div>
+                </section>
+
+                <section class="form-section">
+                    <div class="panel-header">
+                        <h4>🏆 Competiciones</h4>
+                        <button type="button" class="btn btn-success" onclick="agregarCompeticionFormulario()">➕ Agregar competición</button>
+                    </div>
+                    <div id="competicionesLista" class="item-list"></div>
+                </section>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-gray" onclick="cerrarModal()">Cancelar</button>
+                <button type="submit" class="btn btn-blue">💾 Guardar cambios</button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<div class="modal-overlay" id="modalEntrenador">
+    <section class="modal small">
+        <div class="modal-header">
+            <div>
+                <h3>Crear entrenador</h3>
+                <p class="hint">Este registro quedará disponible para seleccionarlo en un club.</p>
+            </div>
+            <button class="btn btn-gray" onclick="cerrarModalEntrenador()">✖</button>
+        </div>
+
+        <form id="formEntrenador">
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input id="nuevoEntrenadorNombre" required placeholder="Ej: Carlos">
+                    </div>
+                    <div class="form-group">
+                        <label>Apellido</label>
+                        <input id="nuevoEntrenadorApellido" required placeholder="Ej: Gómez">
+                    </div>
+                    <div class="form-group">
+                        <label>Edad</label>
+                        <input id="nuevoEntrenadorEdad" type="number" min="18" required placeholder="Ej: 48">
+                    </div>
+                    <div class="form-group">
+                        <label>Nacionalidad</label>
+                        <input id="nuevoEntrenadorNacionalidad" required placeholder="Ej: Colombiana">
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-gray" onclick="cerrarModalEntrenador()">Cancelar</button>
+                <button type="submit" class="btn btn-blue">💾 Guardar entrenador</button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<div class="toast" id="toast">Acción seleccionada</div>
+
+<script>
+    const API_CLUBES = "/api/clubes";
+    const API_ENTRENADORES = "/api/entrenadores";
+
+    let clubesGlobal = [];
+    let entrenadoresGlobal = [];
+
+    const roles = {
+        admin: {
+            titulo: "Panel del Administrador",
+            subtitulo: "Gestión general del sistema deportivo.",
+            nombre: "Administrador",
+            descripcion: "Puede crear entrenadores, crear clubes, seleccionar entrenadores existentes, editar registros y eliminar clubes.",
+            permisos: ["Crear entrenadores", "Crear clubes", "Editar clubes", "Eliminar clubes", "Consultar reportes"],
+            acciones: [
+                { texto: "🎯 Crear entrenador", accion: abrirModalEntrenador },
+                { texto: "➕ Crear nuevo club", accion: abrirModalCrear },
+                { texto: "🔄 Recargar datos", accion: cargarDashboard },
+                { texto: "🌐 Ver JSON de clubes", accion: () => window.open(API_CLUBES, "_blank") }
+            ]
+        },
+        entrenador: {
+            titulo: "Panel del Entrenador",
+            subtitulo: "Seguimiento de jugadores y plantilla.",
+            nombre: "Entrenador",
+            descripcion: "Consulta la plantilla del club, revisa jugadores asignados y competiciones donde participa el equipo.",
+            permisos: ["Consultar jugadores", "Revisar posiciones", "Ver competiciones", "Consultar club"],
+            acciones: [
+                { texto: "👥 Ver plantilla", accion: () => document.getElementById("tablaJugadores").scrollIntoView({behavior: "smooth"}) },
+                { texto: "🏆 Ver competiciones", accion: () => document.getElementById("competicionesContainer").scrollIntoView({behavior: "smooth"}) },
+                { texto: "🔄 Recargar datos", accion: cargarDashboard }
+            ]
+        },
+        asociacion: {
+            titulo: "Panel de Asociación",
+            subtitulo: "Control de clubes afiliados.",
+            nombre: "Asociación",
+            descripcion: "Supervisa los clubes afiliados y su participación en competiciones.",
+            permisos: ["Consultar clubes", "Revisar entrenadores", "Ver competiciones", "Consultar datos institucionales"],
+            acciones: [
+                { texto: "🏟️ Ver clubes afiliados", accion: () => document.getElementById("clubesContainer").scrollIntoView({behavior: "smooth"}) },
+                { texto: "🎯 Ver entrenadores", accion: () => document.getElementById("entrenadoresContainer").scrollIntoView({behavior: "smooth"}) },
+                { texto: "🔄 Recargar datos", accion: cargarDashboard }
+            ]
+        },
+        jugador: {
+            titulo: "Panel del Jugador",
+            subtitulo: "Vista personal de participación deportiva.",
+            nombre: "Jugador",
+            descripcion: "Consulta información del club, compañeros, entrenador y competiciones.",
+            permisos: ["Ver club", "Ver compañeros", "Ver competiciones", "Consultar entrenador"],
+            acciones: [
+                { texto: "👥 Ver compañeros", accion: () => document.getElementById("tablaJugadores").scrollIntoView({behavior: "smooth"}) },
+                { texto: "🏆 Ver competiciones", accion: () => document.getElementById("competicionesContainer").scrollIntoView({behavior: "smooth"}) }
+            ]
+        }
+    };
+
+    const formatoMoneda = new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+        maximumFractionDigits: 0
+    });
+
+    function escapeHtml(valor) {
+        return String(valor ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    function mostrarToast(texto) {
+        const toast = document.getElementById("toast");
+        toast.textContent = texto;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2400);
+    }
+
+    function cambiarRol(rol) {
+        const data = roles[rol];
+        document.getElementById("tituloRol").textContent = data.titulo;
+        document.getElementById("subtituloRol").textContent = data.subtitulo;
+        document.getElementById("rolNombre").textContent = data.nombre;
+        document.getElementById("rolDescripcion").textContent = data.descripcion;
+
+        document.getElementById("permisosRol").innerHTML = data.permisos.map(permiso => `
+            <div class="permission"><span>✅</span><span>${escapeHtml(permiso)}</span></div>
+        `).join("");
+
+        document.getElementById("accionesRol").innerHTML = data.acciones.map((accion, index) => `
+            <button class="action-btn" onclick="ejecutarAccionRol('${rol}', ${index})">${escapeHtml(accion.texto)}</button>
+        `).join("");
+    }
+
+    function ejecutarAccionRol(rol, index) {
+        roles[rol].acciones[index].accion();
+    }
+
+    function obtenerCompeticionesUnicas(clubes) {
+        const mapa = new Map();
+        clubes.forEach(club => {
+            (club.competiciones || []).forEach(competicion => {
+                const clave = competicion.id || competicion.nombre;
+                mapa.set(clave, competicion);
+            });
+        });
+        return Array.from(mapa.values());
+    }
+
+    function renderizarEstadisticas(clubes) {
+        document.getElementById("clubPrincipal").textContent = clubes.length;
+        document.getElementById("totalClubes").textContent = clubes.length;
+        document.getElementById("totalJugadores").textContent = clubes.reduce((total, club) => total + (club.jugadores || []).length, 0);
+        document.getElementById("totalEntrenadores").textContent = entrenadoresGlobal.length;
+        document.getElementById("totalCompeticiones").textContent = obtenerCompeticionesUnicas(clubes).length;
+    }
+
+    function renderizarClubes(clubes) {
+        const contenedor = document.getElementById("clubesContainer");
+        if (clubes.length === 0) {
+            contenedor.innerHTML = `<div class="loading">No hay clubes registrados.</div>`;
+            return;
+        }
+
+        contenedor.innerHTML = clubes.map(club => `
+            <article class="club-card">
+                <div class="club-card-top">
+                    <div>
+                        <h4>${escapeHtml(club.nombre)}</h4>
+                        <p>${escapeHtml(club.ciudad)} · ID ${escapeHtml(club.id)}</p>
+                    </div>
+                    <span class="pill">Activo</span>
+                </div>
+
+                <div class="mini-grid">
+                    <div class="mini-box">
+                        <strong>Entrenador</strong>
+                        <span>${escapeHtml(club.entrenador?.nombre)} ${escapeHtml(club.entrenador?.apellido)}</span>
+                    </div>
+                    <div class="mini-box">
+                        <strong>Asociación</strong>
+                        <span>${escapeHtml(club.asociacion?.nombre)}</span>
+                    </div>
+                    <div class="mini-box">
+                        <strong>Jugadores</strong>
+                        <span>${(club.jugadores || []).length}</span>
+                    </div>
+                </div>
+
+                <div class="card-actions">
+                    <button class="btn btn-warning" onclick="abrirModalEditar(${club.id})">✏️ Editar</button>
+                    <button class="btn btn-danger" onclick="eliminarClub(${club.id})">🗑️ Eliminar</button>
+                </div>
+            </article>
+        `).join("");
+    }
+
+    function renderizarJugadores(clubes) {
+        const tabla = document.getElementById("tablaJugadores");
+        const filas = [];
+
+        clubes.forEach(club => {
+            (club.jugadores || []).forEach(jugador => {
+                filas.push(`
+                    <tr>
+                        <td><strong>${escapeHtml(jugador.nombre)} ${escapeHtml(jugador.apellido)}</strong></td>
+                        <td>${escapeHtml(jugador.numero)}</td>
+                        <td>${escapeHtml(jugador.posicion)}</td>
+                        <td>${escapeHtml(club.nombre)}</td>
+                    </tr>
+                `);
+            });
+        });
+
+        tabla.innerHTML = filas.length > 0 ? filas.join("") : `<tr><td colspan="4">No hay jugadores registrados.</td></tr>`;
+    }
+
+    function renderizarCompeticiones(clubes) {
+        const contenedor = document.getElementById("competicionesContainer");
+        const competiciones = obtenerCompeticionesUnicas(clubes);
+
+        if (competiciones.length === 0) {
+            contenedor.innerHTML = `<div class="loading">No hay competiciones registradas.</div>`;
+            return;
+        }
+
+        contenedor.innerHTML = competiciones.map(competicion => `
+            <article class="club-card">
+                <h4>${escapeHtml(competicion.nombre)}</h4>
+                <p><strong>Premio:</strong> ${formatoMoneda.format(competicion.montoPremio || 0)}</p>
+                <p><strong>Inicio:</strong> ${escapeHtml(competicion.fechaInicio)}</p>
+                <p><strong>Fin:</strong> ${escapeHtml(competicion.fechaFin)}</p>
+            </article>
+        `).join("");
+    }
+
+    function renderizarEntrenadores() {
+        const contenedor = document.getElementById("entrenadoresContainer");
+
+        if (entrenadoresGlobal.length === 0) {
+            contenedor.innerHTML = `<div class="loading">No hay entrenadores. Crea uno desde el botón “Nuevo entrenador”.</div>`;
+            return;
+        }
+
+        contenedor.innerHTML = entrenadoresGlobal.map(entrenador => `
+            <article class="club-card">
+                <h4>${escapeHtml(entrenador.nombre)} ${escapeHtml(entrenador.apellido)}</h4>
+                <p><strong>Edad:</strong> ${escapeHtml(entrenador.edad)}</p>
+                <p><strong>Nacionalidad:</strong> ${escapeHtml(entrenador.nacionalidad)}</p>
+            </article>
+        `).join("");
+    }
+
+    function llenarSelectEntrenadores(entrenadorSeleccionadoId = "") {
+        const select = document.getElementById("entrenadorSelect");
+
+        if (entrenadoresGlobal.length === 0) {
+            select.innerHTML = `<option value="">No hay entrenadores registrados</option>`;
+            return;
+        }
+
+        select.innerHTML = `<option value="">Selecciona un entrenador</option>` + entrenadoresGlobal.map(entrenador => `
+            <option value="${entrenador.id}" ${Number(entrenadorSeleccionadoId) === Number(entrenador.id) ? "selected" : ""}>
+                ${escapeHtml(entrenador.nombre)} ${escapeHtml(entrenador.apellido)} - ${escapeHtml(entrenador.nacionalidad)}
+            </option>
+        `).join("");
+    }
+
+    async function cargarDashboard() {
+        const contenedor = document.getElementById("clubesContainer");
+        const competiciones = document.getElementById("competicionesContainer");
+        const entrenadores = document.getElementById("entrenadoresContainer");
+        const tabla = document.getElementById("tablaJugadores");
+
+        contenedor.innerHTML = `<div class="loading">Cargando clubes...</div>`;
+        competiciones.innerHTML = `<div class="loading">Cargando competiciones...</div>`;
+        entrenadores.innerHTML = `<div class="loading">Cargando entrenadores...</div>`;
+        tabla.innerHTML = `<tr><td colspan="4">Cargando...</td></tr>`;
+
+        try {
+            const [respuestaClubes, respuestaEntrenadores] = await Promise.all([
+                fetch(API_CLUBES),
+                fetch(API_ENTRENADORES)
+            ]);
+
+            if (!respuestaClubes.ok) throw new Error("No se pudo conectar con /api/clubes");
+            if (!respuestaEntrenadores.ok) throw new Error("No se pudo conectar con /api/entrenadores");
+
+            clubesGlobal = await respuestaClubes.json();
+            entrenadoresGlobal = await respuestaEntrenadores.json();
+
+            renderizarEstadisticas(clubesGlobal);
+            renderizarClubes(clubesGlobal);
+            renderizarJugadores(clubesGlobal);
+            renderizarCompeticiones(clubesGlobal);
+            renderizarEntrenadores();
+            llenarSelectEntrenadores();
+
+            document.getElementById("apiEstado").textContent = "API conectada";
+            document.querySelector(".dot").style.background = "var(--success)";
+        } catch (error) {
+            contenedor.innerHTML = `<div class="error"><strong>Error:</strong> ${escapeHtml(error.message)}</div>`;
+            competiciones.innerHTML = `<div class="error">No se pudieron cargar las competiciones.</div>`;
+            entrenadores.innerHTML = `<div class="error">No se pudieron cargar los entrenadores.</div>`;
+            tabla.innerHTML = `<tr><td colspan="4">No se pudieron cargar los jugadores.</td></tr>`;
+            document.getElementById("apiEstado").textContent = "API desconectada";
+            document.querySelector(".dot").style.background = "var(--danger)";
+        }
+    }
+
+    function crearJugadorHtml(jugador = {}) {
+        const div = document.createElement("div");
+        div.className = "dynamic-item jugador-item";
+        div.innerHTML = `
+            <input class="jugador-nombre" placeholder="Nombre" required value="${escapeHtml(jugador.nombre || "")}">
+            <input class="jugador-apellido" placeholder="Apellido" required value="${escapeHtml(jugador.apellido || "")}">
+            <input class="jugador-numero" type="number" min="1" placeholder="N°" required value="${escapeHtml(jugador.numero || "")}">
+            <input class="jugador-posicion" placeholder="Posición" required value="${escapeHtml(jugador.posicion || "")}">
+            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove(); validarListasFormulario();">🗑️</button>
+        `;
+        return div;
+    }
+
+    function crearCompeticionHtml(competicion = {}) {
+        const div = document.createElement("div");
+        div.className = "dynamic-item competition competicion-item";
+        div.innerHTML = `
+            <input class="competicion-nombre" placeholder="Nombre competición" required value="${escapeHtml(competicion.nombre || "")}">
+            <input class="competicion-premio" type="number" min="0" placeholder="Premio" required value="${escapeHtml(competicion.montoPremio || "")}">
+            <input class="competicion-inicio" type="date" required value="${escapeHtml(competicion.fechaInicio || "")}">
+            <input class="competicion-fin" type="date" required value="${escapeHtml(competicion.fechaFin || "")}">
+            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove(); validarListasFormulario();">🗑️</button>
+        `;
+        return div;
+    }
+
+    function validarListasFormulario() {
+        const jugadoresLista = document.getElementById("jugadoresLista");
+        const competicionesLista = document.getElementById("competicionesLista");
+
+        if (jugadoresLista.querySelectorAll(".jugador-item").length === 0) {
+            jugadoresLista.innerHTML = `<div class="empty-list">No hay jugadores. Usa el botón “Agregar jugador”.</div>`;
+        } else {
+            const empty = jugadoresLista.querySelector(".empty-list");
+            if (empty) empty.remove();
+        }
+
+        if (competicionesLista.querySelectorAll(".competicion-item").length === 0) {
+            competicionesLista.innerHTML = `<div class="empty-list">No hay competiciones. Usa el botón “Agregar competición”.</div>`;
+        } else {
+            const empty = competicionesLista.querySelector(".empty-list");
+            if (empty) empty.remove();
+        }
+    }
+
+    function agregarJugadorFormulario(jugador = {}) {
+        const lista = document.getElementById("jugadoresLista");
+        const empty = lista.querySelector(".empty-list");
+        if (empty) empty.remove();
+        lista.appendChild(crearJugadorHtml(jugador));
+    }
+
+    function agregarCompeticionFormulario(competicion = {}) {
+        const lista = document.getElementById("competicionesLista");
+        const empty = lista.querySelector(".empty-list");
+        if (empty) empty.remove();
+        lista.appendChild(crearCompeticionHtml(competicion));
+    }
+
+    function abrirModalCrear() {
+        if (entrenadoresGlobal.length === 0) {
+            mostrarToast("Primero crea un entrenador para poder asignarlo al club");
+            abrirModalEntrenador();
+            return;
+        }
+
+        document.getElementById("modalTitulo").textContent = "Crear nuevo club";
+        document.getElementById("formClub").reset();
+        document.getElementById("clubId").value = "";
+        document.getElementById("jugadoresLista").innerHTML = "";
+        document.getElementById("competicionesLista").innerHTML = "";
+        llenarSelectEntrenadores();
+
+        agregarJugadorFormulario({ nombre: "Andrés", apellido: "Pérez", numero: 10, posicion: "Volante" });
+        agregarCompeticionFormulario({ nombre: "Liga Colombiana", montoPremio: 500000000, fechaInicio: "2026-01-20", fechaFin: "2026-06-30" });
+
+        document.getElementById("modalClub").classList.add("show");
+    }
+
+    function abrirModalEditar(id) {
+        const club = clubesGlobal.find(item => item.id === id);
+        if (!club) {
+            mostrarToast("No se encontró el club seleccionado");
+            return;
+        }
+
+        document.getElementById("modalTitulo").textContent = "Editar club";
+        document.getElementById("clubId").value = club.id;
+        document.getElementById("clubNombre").value = club.nombre || "";
+        document.getElementById("clubCiudad").value = club.ciudad || "";
+        llenarSelectEntrenadores(club.entrenador?.id || "");
+        document.getElementById("asociacionNombre").value = club.asociacion?.nombre || "";
+        document.getElementById("asociacionPais").value = club.asociacion?.pais || "";
+        document.getElementById("asociacionPresidente").value = club.asociacion?.presidente || "";
+
+        document.getElementById("jugadoresLista").innerHTML = "";
+        document.getElementById("competicionesLista").innerHTML = "";
+
+        (club.jugadores || []).forEach(jugador => agregarJugadorFormulario(jugador));
+        (club.competiciones || []).forEach(competicion => agregarCompeticionFormulario(competicion));
+
+        validarListasFormulario();
+        document.getElementById("modalClub").classList.add("show");
+    }
+
+    function cerrarModal() {
+        document.getElementById("modalClub").classList.remove("show");
+    }
+
+    function abrirModalEntrenador() {
+        document.getElementById("formEntrenador").reset();
+        document.getElementById("modalEntrenador").classList.add("show");
+    }
+
+    function cerrarModalEntrenador() {
+        document.getElementById("modalEntrenador").classList.remove("show");
+    }
+
+    function obtenerJugadoresFormulario() {
+        return Array.from(document.querySelectorAll(".jugador-item")).map(item => ({
+            nombre: item.querySelector(".jugador-nombre").value.trim(),
+            apellido: item.querySelector(".jugador-apellido").value.trim(),
+            numero: Number(item.querySelector(".jugador-numero").value),
+            posicion: item.querySelector(".jugador-posicion").value.trim()
+        }));
+    }
+
+    function obtenerCompeticionesFormulario() {
+        return Array.from(document.querySelectorAll(".competicion-item")).map(item => ({
+            nombre: item.querySelector(".competicion-nombre").value.trim(),
+            montoPremio: Number(item.querySelector(".competicion-premio").value),
+            fechaInicio: item.querySelector(".competicion-inicio").value,
+            fechaFin: item.querySelector(".competicion-fin").value
+        }));
+    }
+
+    function obtenerDatosFormulario() {
+        const entrenadorId = Number(document.getElementById("entrenadorSelect").value);
+
+        return {
+            nombre: document.getElementById("clubNombre").value.trim(),
+            ciudad: document.getElementById("clubCiudad").value.trim(),
+            entrenador: { id: entrenadorId },
+            asociacion: {
+                nombre: document.getElementById("asociacionNombre").value.trim(),
+                pais: document.getElementById("asociacionPais").value.trim(),
+                presidente: document.getElementById("asociacionPresidente").value.trim()
+            },
+            jugadores: obtenerJugadoresFormulario(),
+            competiciones: obtenerCompeticionesFormulario()
+        };
+    }
+
+    async function guardarClub(evento) {
+        evento.preventDefault();
+
+        const entrenadorId = document.getElementById("entrenadorSelect").value;
+        const jugadores = obtenerJugadoresFormulario();
+        const competiciones = obtenerCompeticionesFormulario();
+
+        if (!entrenadorId) {
+            mostrarToast("Selecciona un entrenador");
+            return;
+        }
+
+        if (jugadores.length === 0) {
+            mostrarToast("Agrega al menos un jugador");
+            return;
+        }
+
+        if (competiciones.length === 0) {
+            mostrarToast("Agrega al menos una competición");
+            return;
+        }
+
+        const id = document.getElementById("clubId").value;
+        const datos = obtenerDatosFormulario();
+        const editando = id !== "";
+
+        try {
+            const respuesta = await fetch(editando ? `${API_CLUBES}/${id}` : API_CLUBES, {
+                method: editando ? "PUT" : "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(datos)
+            });
+
+            if (!respuesta.ok) {
+                const mensaje = await respuesta.text();
+                throw new Error(mensaje || "No se pudo guardar el club");
+            }
+
+            cerrarModal();
+            await cargarDashboard();
+            mostrarToast(editando ? "Club actualizado correctamente" : "Club creado correctamente");
+        } catch (error) {
+            mostrarToast("Error: revisa que el entrenador no esté asignado a otro club");
+        }
+    }
+
+    async function guardarEntrenador(evento) {
+        evento.preventDefault();
+
+        const entrenador = {
+            nombre: document.getElementById("nuevoEntrenadorNombre").value.trim(),
+            apellido: document.getElementById("nuevoEntrenadorApellido").value.trim(),
+            edad: Number(document.getElementById("nuevoEntrenadorEdad").value),
+            nacionalidad: document.getElementById("nuevoEntrenadorNacionalidad").value.trim()
+        };
+
+        try {
+            const respuesta = await fetch(API_ENTRENADORES, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(entrenador)
+            });
+
+            if (!respuesta.ok) throw new Error("No se pudo guardar el entrenador");
+
+            cerrarModalEntrenador();
+            await cargarDashboard();
+            mostrarToast("Entrenador creado correctamente");
+        } catch (error) {
+            mostrarToast(error.message);
+        }
+    }
+
+    async function eliminarClub(id) {
+        const club = clubesGlobal.find(item => item.id === id);
+        if (!confirm(`¿Seguro que deseas eliminar el club "${club?.nombre || id}"?`)) return;
+
+        try {
+            const respuesta = await fetch(`${API_CLUBES}/${id}`, { method: "DELETE" });
+            if (!respuesta.ok) throw new Error("No se pudo eliminar el club");
+            await cargarDashboard();
+            mostrarToast("Club eliminado correctamente");
+        } catch (error) {
+            mostrarToast(error.message);
+        }
+    }
+
+    document.querySelectorAll(".role-btn").forEach(boton => {
+        boton.addEventListener("click", () => {
+            document.querySelectorAll(".role-btn").forEach(item => item.classList.remove("active"));
+            boton.classList.add("active");
+            cambiarRol(boton.dataset.role);
+        });
+    });
+
+    document.getElementById("formClub").addEventListener("submit", guardarClub);
+    document.getElementById("formEntrenador").addEventListener("submit", guardarEntrenador);
+
+    cambiarRol("admin");
+    cargarDashboard();
+</script>
+
+</body>
+</html>
