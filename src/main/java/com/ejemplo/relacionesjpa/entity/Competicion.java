@@ -18,14 +18,14 @@ public class Competicion {
     private Long id;
 
     private String nombre;
-    private int montoPremio;
+    private Integer montoPremio;
     private LocalDate fechaInicio;
     private LocalDate fechaFin;
 
     public Competicion() {
     }
 
-    public Competicion(String nombre, int montoPremio, LocalDate fechaInicio, LocalDate fechaFin) {
+    public Competicion(String nombre, Integer montoPremio, LocalDate fechaInicio, LocalDate fechaFin) {
         this.nombre = nombre;
         this.montoPremio = montoPremio;
         this.fechaInicio = fechaInicio;
@@ -48,11 +48,11 @@ public class Competicion {
         this.nombre = nombre;
     }
 
-    public int getMontoPremio() {
+    public Integer getMontoPremio() {
         return montoPremio;
     }
 
-    public void setMontoPremio(int montoPremio) {
+    public void setMontoPremio(Integer montoPremio) {
         this.montoPremio = montoPremio;
     }
 

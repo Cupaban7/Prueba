@@ -17,13 +17,13 @@ public class Jugador {
 
     private String nombre;
     private String apellido;
-    private int numero;
+    private Integer numero;
     private String posicion;
 
     public Jugador() {
     }
 
-    public Jugador(String nombre, String apellido, int numero, String posicion) {
+    public Jugador(String nombre, String apellido, Integer numero, String posicion) {
         this.nombre = nombre;
         this.apellido = apellido;
         this.numero = numero;
@@ -54,11 +54,11 @@ public class Jugador {
         this.apellido = apellido;
     }
 
-    public int getNumero() {
+    public Integer getNumero() {
         return numero;
     }
 
-    public void setNumero(int numero) {
+    public void setNumero(Integer numero) {
         this.numero = numero;
     }
 

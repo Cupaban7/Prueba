@@ -17,13 +17,13 @@ public class Entrenador {
 
     private String nombre;
     private String apellido;
-    private int edad;
+    private Integer edad;
     private String nacionalidad;
 
     public Entrenador() {
     }
 
-    public Entrenador(String nombre, String apellido, int edad, String nacionalidad) {
+    public Entrenador(String nombre, String apellido, Integer edad, String nacionalidad) {
         this.nombre = nombre;
         this.apellido = apellido;
         this.edad = edad;
@@ -54,11 +54,11 @@ public class Entrenador {
         this.apellido = apellido;
     }
 
-    public int getEdad() {
+    public Integer getEdad() {
         return edad;
     }
 
-    public void setEdad(int edad) {
+    public void setEdad(Integer edad) {
         this.edad = edad;
     }
 
